@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.commands.Drive.DefaultDriveCommand;
 import frc.robot.subsystems.DrivetrainSubsystem;
+import frc.robot.subsystems.VisionSubsystem;
 
 public class RobotContainer {
 
@@ -25,11 +26,13 @@ public class RobotContainer {
 //======================== Create Subsystem Instance ===========================
   private final static DrivetrainSubsystem drivetrain = new DrivetrainSubsystem();
   private final Superstructure superstructure = new Superstructure();
+  private final VisionSubsystem vision = new VisionSubsystem();
 
   private final ThrustMaster driveJoy = new ThrustMaster(Constants.DRIVE_CONTROLLER_ID);
 
   public RobotContainer() {
       drivetrain.register();
+      vision.register();
 
       drivetrain.setDefaultCommand(new DefaultDriveCommand(drivetrain, this::getForwardInput, this::getStrafeInput, this::getRotationInput, this::getThrottleInput));
 
