@@ -5,6 +5,7 @@ import com.swervedrivespecialties.swervelib.MkSwerveModuleBuilder;
 import com.swervedrivespecialties.swervelib.MotorType;
 import com.swervedrivespecialties.swervelib.SdsModuleConfigurations;
 import com.swervedrivespecialties.swervelib.SwerveModule;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -52,10 +53,10 @@ public class DrivetrainSubsystem extends SubsystemBase {
                         .withSize(2, 4)
                         .withPosition(0, 0))
                 .withGearRatio(SdsModuleConfigurations.MK4I_L3)
-                .withDriveMotor(MotorType.NEO, Constants.FrontLeft.FRONT_LEFT_MODULE_DRIVE_MOTOR)
-                .withSteerMotor(MotorType.NEO, Constants.FrontLeft.FRONT_LEFT_MODULE_STEER_MOTOR)
-                .withSteerEncoderPort(Constants.FrontLeft.FRONT_LEFT_MODULE_STEER_ENCODER)
-                .withSteerOffset(Constants.FrontLeft.FRONT_LEFT_MODULE_STEER_OFFSET)
+                .withDriveMotor(MotorType.NEO, Constants.FrontLeft.DRIVE_MOTOR)
+                .withSteerMotor(MotorType.NEO, Constants.FrontLeft.STEER_MOTOR)
+                .withSteerEncoderPort(Constants.FrontLeft.STEER_ENCODER)
+                .withSteerOffset(Constants.FrontLeft.STEER_MOTOR)
                 .build();
 
         frontRightModule = new MkSwerveModuleBuilder()
@@ -63,10 +64,10 @@ public class DrivetrainSubsystem extends SubsystemBase {
                         .withSize(2, 4)
                         .withPosition(2, 0))
                 .withGearRatio(SdsModuleConfigurations.MK4I_L3)
-                .withDriveMotor(MotorType.NEO, Constants.FrontRight.FRONT_RIGHT_MODULE_DRIVE_MOTOR)
-                .withSteerMotor(MotorType.NEO, Constants.FrontRight.FRONT_RIGHT_MODULE_STEER_MOTOR)
-                .withSteerEncoderPort(Constants.FrontRight.FRONT_RIGHT_MODULE_STEER_ENCODER)
-                .withSteerOffset(Constants.FrontRight.FRONT_RIGHT_MODULE_STEER_OFFSET)
+                .withDriveMotor(MotorType.NEO, Constants.FrontRight.DRIVE_MOTOR)
+                .withSteerMotor(MotorType.NEO, Constants.FrontRight.STEER_MOTOR)
+                .withSteerEncoderPort(Constants.FrontRight.STEER_ENCODER)
+                .withSteerOffset(Constants.FrontRight.STEER_OFFSET)
                 .build();
 
         backLeftModule = new MkSwerveModuleBuilder()
@@ -74,10 +75,10 @@ public class DrivetrainSubsystem extends SubsystemBase {
                         .withSize(2, 4)
                         .withPosition(4, 0))
                 .withGearRatio(SdsModuleConfigurations.MK4I_L3)
-                .withDriveMotor(MotorType.NEO, Constants.BackLeft.BACK_LEFT_MODULE_DRIVE_MOTOR)
-                .withSteerMotor(MotorType.NEO, Constants.BackLeft.BACK_LEFT_MODULE_STEER_MOTOR)
-                .withSteerEncoderPort(Constants.BackLeft.BACK_LEFT_MODULE_STEER_ENCODER)
-                .withSteerOffset(Constants.BackLeft.BACK_LEFT_MODULE_STEER_OFFSET)
+                .withDriveMotor(MotorType.NEO, Constants.BackLeft.DRIVE_MOTOR)
+                .withSteerMotor(MotorType.NEO, Constants.BackLeft.STEER_MOTOR)
+                .withSteerEncoderPort(Constants.BackLeft.STEER_ENCODER)
+                .withSteerOffset(Constants.BackLeft.STEER_OFFSET)
                 .build();
 
         backRightModule = new MkSwerveModuleBuilder()
@@ -85,10 +86,10 @@ public class DrivetrainSubsystem extends SubsystemBase {
                         .withSize(2, 4)
                         .withPosition(6, 0))
                 .withGearRatio(SdsModuleConfigurations.MK4I_L3)
-                .withDriveMotor(MotorType.NEO, Constants.BackRight.BACK_RIGHT_MODULE_DRIVE_MOTOR)
-                .withSteerMotor(MotorType.NEO, Constants.BackRight.BACK_RIGHT_MODULE_STEER_MOTOR)
-                .withSteerEncoderPort(Constants.BackRight.BACK_RIGHT_MODULE_STEER_ENCODER)
-                .withSteerOffset(Constants.BackRight.BACK_RIGHT_MODULE_STEER_OFFSET)
+                .withDriveMotor(MotorType.NEO, Constants.BackRight.DRIVE_MOTOR)
+                .withSteerMotor(MotorType.NEO, Constants.BackRight.STEER_MOTOR)
+                .withSteerEncoderPort(Constants.BackRight.STEER_ENCODER)
+                .withSteerOffset(Constants.BackRight.STEER_OFFSET)
                 .build();
 
         odometry = new SwerveDriveOdometry(
@@ -140,4 +141,39 @@ public class DrivetrainSubsystem extends SubsystemBase {
         backLeftModule.set(states[2].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[2].angle.getRadians());
         backRightModule.set(states[3].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[3].angle.getRadians());
     }
+
+//=============================================================================================
+//=================================== Path Planner ============================================
+
+        public void setDesiredState(SwerveModuleState[] states) {
+                frontLeftModule.set(states[0].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[0].angle.getRadians());
+                frontRightModule.set(states[1].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[1].angle.getRadians());
+                backLeftModule.set(states[2].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[2].angle.getRadians());
+                backRightModule.set(states[3].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[3].angle.getRadians());
+        }
+
+        public Pose2d getPose() {
+                return odometry.getPoseMeters();
+        }
+
+        public void resetOdometry(Pose2d pose) {
+                odometry.resetPosition(getAngle(), getPositions(), pose);
+        }
+
+        private SwerveModulePosition[] getPositions() {
+                SwerveModulePosition[] swerveStates = { frontLeftModule.getPosition(), frontRightModule.getPosition(),
+                        backLeftModule.getPosition(), backRightModule.getPosition() };
+                return swerveStates;
+        }
+
+    public Rotation2d getAngle() {
+        var degrees = gyroscope.getRotation2d().getDegrees();
+        degrees = -degrees;
+        return Rotation2d.fromDegrees(degrees);
+    }
+
+    public SwerveDriveKinematics getKinematics() {
+        return kinematics;
+    }
+
 }

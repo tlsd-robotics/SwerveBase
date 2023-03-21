@@ -1,12 +1,25 @@
 package Common;
 
-/** Add your docs here. */
+/** 
+ * Creates a new Limelight Pipeline using the pipelines ID and LED state
+ * 
+*/
 public class LimelightPipeline {
-    public double id;
-    boolean ledState;
+    private double id;
+    private boolean ledState;
   
-    LimelightPipeline(double id, boolean ledState) {
+    
+    public LimelightPipeline(double id, boolean ledState) {
       this.id = id;
       this.ledState = ledState;
     }
-  }
+
+    public double getId() {
+      return id;
+    }
+
+    public boolean getLedState() {
+      return ledState;
+    }
+
+}

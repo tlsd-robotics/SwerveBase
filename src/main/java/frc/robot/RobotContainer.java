@@ -1,16 +1,30 @@
 package frc.robot;
 
+import java.util.HashMap;
+
+import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.auto.PIDConstants;
+import com.pathplanner.lib.auto.SwerveAutoBuilder;
+import com.pathplanner.lib.commands.PPSwerveControllerCommand;
+
 import Common.ThrustMaster;
 import Common.Utilities;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.commands.Drive.DefaultDriveCommand;
 import frc.robot.subsystems.DrivetrainSubsystem;
 
 public class RobotContainer {
 
+  HashMap <String, Command> eventMap = new HashMap<String, Command>();
+
 //==============================================================================
 //======================== Create Subsystem Instance ===========================
-  private final DrivetrainSubsystem drivetrain = new DrivetrainSubsystem();
+  private final static DrivetrainSubsystem drivetrain = new DrivetrainSubsystem();
+  private final Superstructure superstructure = new Superstructure();
 
   private final ThrustMaster driveJoy = new ThrustMaster(Constants.DRIVE_CONTROLLER_ID);
 
@@ -20,12 +34,13 @@ public class RobotContainer {
       drivetrain.setDefaultCommand(new DefaultDriveCommand(drivetrain, this::getForwardInput, this::getStrafeInput, this::getRotationInput, this::getThrottleInput));
 
       configureBindings();
+      configureEventMap();
   }
 
 
 //==============================================================================
 //=============================== Getter Methods ===============================
-  public DrivetrainSubsystem getDrivetrain() {
+  public static DrivetrainSubsystem getDrivetrain() {
     return drivetrain;
   }
 
@@ -33,14 +48,18 @@ public class RobotContainer {
     return driveJoy;
   }
 
+  public Superstructure getSuperstructure() {
+    return superstructure;
+  }
+
 
 //==============================================================================
 //=========================== Configure Bindings ===============================
   private void configureBindings() {
-    
     driveJoy.getMiddle().onTrue(new RunCommand(drivetrain::zeroGyroscope));
   }
 
+  private void configureEventMap() {}
 
 //==============================================================================
 //=========================== Modify Joystick Input ============================
@@ -73,4 +92,39 @@ public class RobotContainer {
   private double getThrottleInput() {
     return Utilities.map(driveJoy.getThrottle(), 1, -1, 0, 1);
   }
+
+
+//============================================================================
+//============================== Path Planner ================================
+  
+public SwerveAutoBuilder autoBuilder = new SwerveAutoBuilder(
+  drivetrain::getPose,
+  drivetrain::resetOdometry,
+  new PIDConstants(1.5, 0.0, 0.0),
+  new PIDConstants(0.5, 0.0, 0.0),
+  drivetrain::drive,
+  eventMap,
+  drivetrain
+);
+
+public Command followTrajectory(PathPlannerTrajectory traj, boolean isFirstPath) {
+  return new SequentialCommandGroup(
+  new InstantCommand(() -> {
+  if(isFirstPath){
+    drivetrain.resetOdometry(traj.getInitialHolonomicPose());
+  }
+  }),
+  new PPSwerveControllerCommand(
+  traj,
+  drivetrain::getPose,
+  new PIDController(1.5, 0.0, 0.0),
+  new PIDController(1.5, 0.0, 0.0),
+  new PIDController(0.5, 0.0, 0.0),
+  drivetrain::drive,
+  drivetrain
+  )
+  );
+}
+
+
 }

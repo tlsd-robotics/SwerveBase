@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import com.pathplanner.lib.PathPlanner;
+
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -15,14 +17,15 @@ public class Robot extends TimedRobot {
   public static SendableChooser<Command> sendablechooser = new SendableChooser<Command>();
   private Command m_autonomousCommand;
 
+  @SuppressWarnings("unused")
   private RobotContainer m_robotContainer;
 
   @Override
   public void robotInit() {
-    @SuppressWarnings("unused")
     RobotContainer m_robotContainer = new RobotContainer();
 
     sendablechooser.setDefaultOption("Do nothing", null);
+    sendablechooser.addOption("Path Auto", m_robotContainer.autoBuilder.fullAuto(PathPlanner.loadPathGroup("TestPath", 2, 1)));
     SmartDashboard.putData("Autonomous", sendablechooser);
   }
 
@@ -42,7 +45,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    m_robotContainer.getDrivetrain().resetToAbsolute();
+    RobotContainer.getDrivetrain().resetToAbsolute();
 
     m_autonomousCommand = sendablechooser.getSelected();
 
@@ -59,7 +62,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    m_robotContainer.getDrivetrain().resetToAbsolute();
+    RobotContainer.getDrivetrain().resetToAbsolute();
 
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
