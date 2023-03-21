@@ -1,5 +1,6 @@
 package Common;
 
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -24,15 +25,18 @@ public class Limelight {
 // Instance Variables
   private NetworkTable table;
   private NetworkTableEntry ledMode;
+  private double distanceFromGroundInches;
+  private double angle;
 
-  public double distanceFromGroundMeters;
+  
 
   // =================== Limelight Constructor ======================
-  private Limelight(String NetworkTableName, LimelightPipeline DefaultPipeline, double distanceFromGroundMeters) {
+  public Limelight(String NetworkTableName, LimelightPipeline DefaultPipeline, double distanceFromGroundInches, double angleDegrees) {
 
       this.table = NetworkTableInstance.getDefault().getTable(NetworkTableName);
       this.ledMode = table.getEntry("ledMode");
-      this.distanceFromGroundMeters = distanceFromGroundMeters;
+      this.distanceFromGroundInches = distanceFromGroundInches;
+      this.angle = angleDegrees;
 
       setPipeline(DefaultPipeline);
       setLedOn(false);
@@ -43,8 +47,8 @@ public class Limelight {
   // ======================== Setters and Getters ===========================
 
   public void setPipeline(LimelightPipeline pipeline){
-      this.table.getEntry("pipeline").setNumber(pipeline.id);
-      ledMode.setNumber(pipeline.ledState ? LedModes.LED_ON.id : LedModes.LED_OFF.id);
+      this.table.getEntry("pipeline").setNumber(pipeline.getId());
+      setLedOn(pipeline.getLedState());
   }
 
   public void setLedOn(boolean isOn) {
@@ -67,9 +71,7 @@ public class Limelight {
    * @return True if target found and vise-versa
    */
   public boolean getIsTargetFound() {
-      NetworkTableEntry tv = table.getEntry("tv");
-      double v = tv.getDouble(0);
-      return (v == 0.0f ? false : true);
+    return table.getEntry("tv").getDouble(0) > 0.5;
   }
   /**
    * tx Horizontal Offset From Crosshair To Target (-27 degrees to 27 degrees)
@@ -109,11 +111,27 @@ public double[] getCorners() {
   return table.getEntry("tcornxy").getDoubleArray(new double[] {});
 }
 
-public double getDistanceToTarget(double targetHeightMeters) {
-  return (targetHeightMeters - distanceFromGroundMeters) / Math.tan(Math.toRadians(getVerticalError()));
+public double distanceFromTargetInInches(Limelight limelight, Target target) {
+  return (target.getHeightFromGroundsInInches() - limelight.distanceFromGroundInches)/Math.tan(limelight.getAngle() + limelight.getVerticalError());
+}
+
+public double distanceFromTargetInMeters(Limelight limelight, Target target) {
+  return Units.inchesToMeters(distanceFromTargetInInches(limelight, target));
 }
 
 public NetworkTable getNetworkTable(Limelight limelight) {
   return table;
+}
+
+public NetworkTableEntry getLedMode() {
+    return ledMode;
+  }
+
+public double getDistanceFromGroundInches() {
+  return distanceFromGroundInches;
+}
+
+public double getAngle() {
+  return angle;
 }
 }
